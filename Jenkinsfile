@@ -1,48 +1,31 @@
 pipeline {
     agent any
 
-    environment {
-        ANSIBLE_HOST_KEY_CHECKING = 'False'
-    }
-
     stages {
-        stage('Clone Flask App Repo') {
+        stage('Clone Repo') {
             steps {
-                echo '📥 Cloning your GitHub repo...'
-                git url: 'https://github.com/111nawaz/Flask-app-ansible.git', branch: 'main'
+                echo '📥 Cloning repository...'
             }
         }
 
-        stage('Install Ansible (if not installed)') {
+        stage('Install Ansible') {
             steps {
-                echo '🔧 Checking Ansible installation...'
+                echo '🔧 Installing Ansible (if not present)...'
                 sh '''
-                    if ! command -v ansible >/dev/null; then
-                        echo "Installing Ansible..."
-                        sudo apt update
-                        sudo apt install -y ansible
-                    else
-                        echo "Ansible already installed."
-                    fi
+                  if ! command -v ansible >/dev/null 2>&1; then
+                    apt update && apt install -y ansible
+                  fi
                 '''
             }
         }
 
         stage('Run Ansible Playbook') {
             steps {
-                echo '🚀 Running Ansible Playbook...'
-                sh 'ansible-playbook -i inventory.ini deploy_flask_app.yaml'
+                echo '🚀 Running Ansible playbook...'
+                sh '''
+                  ansible-playbook -i inventory.ini deploy_flask_app.yaml
+                '''
             }
         }
     }
-
-    post {
-        success {
-            echo '✅ Deployment completed successfully!'
-        }
-        failure {
-            echo '❌ Deployment failed. Check logs for errors.'
-        }
-    }
 }
-
